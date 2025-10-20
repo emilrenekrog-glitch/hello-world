@@ -2,16 +2,16 @@ import './App.css'
 
 const highlights = [
   {
-    title: 'Instant start',
-    copy: 'Spin up a fresh project in seconds and keep moving forward fast.',
+    title: 'Simple setup',
+    copy: 'Everything you need to say hello is already in place and ready to go.',
   },
   {
-    title: 'Clean aesthetic',
-    copy: 'Enjoy a calming layout that keeps the focus on what matters.',
+    title: 'Modern feel',
+    copy: 'A calm, balanced layout that looks current without getting in the way.',
   },
   {
-    title: 'Friendly to build on',
-    copy: 'Drop in new sections or components without redesigning from scratch.',
+    title: 'Room to grow',
+    copy: 'Add your ideas at your own pace and keep the friendly vibe intact.',
   },
 ]
 
@@ -19,18 +19,18 @@ function App() {
   return (
     <main className="hero">
       <section className="hero-card">
-        <span className="hero-card__eyebrow">A warm welcome</span>
-        <h1>Hello World</h1>
+        <span className="hero-card__eyebrow">Hello there</span>
+        <h1>A friendly hello world</h1>
         <p>
-          This refreshed starting point is simple, modern, and inviting—ready for you to
-          tailor into something uniquely yours.
+          Keep things light while you get started. This starter keeps the gentle gradients,
+          soft edges, and space to share a clear message.
         </p>
         <div className="hero-card__actions">
-          <a className="button button--primary" href="#get-started">
-            Get started
+          <a className="button button--primary" href="#say-hello">
+            Say hello
           </a>
-          <a className="button button--ghost" href="#tour">
-            Take a tour
+          <a className="button button--ghost" href="#learn-more">
+            Learn more
           </a>
         </div>
         <ul className="hero-card__highlights">
