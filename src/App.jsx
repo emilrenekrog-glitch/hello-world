@@ -1,7 +1,47 @@
+import { useMemo, useState } from 'react'
+
 import './App.css'
 import Layout from './components/Layout'
+import {
+  loadNewsletterEntries,
+  saveNewsletterEntries,
+  NEWSLETTER_STORAGE_KEY,
+} from './utils/newsletterStorage'
 
 function App() {
+  const [email, setEmail] = useState('')
+  const [entries, setEntries] = useState(() => loadNewsletterEntries())
+
+  const [statusMessage, setStatusMessage] = useState('')
+
+  const submissionsLabel = useMemo(() => {
+    if (entries.length === 0) {
+      return 'No submissions yet'
+    }
+
+    const { email: lastEmail } = entries[entries.length - 1]
+    return `Most recent signup: ${lastEmail}`
+  }, [entries])
+
+  function handleSubmit(event) {
+    event.preventDefault()
+
+    if (!email) {
+      return
+    }
+
+    const newEntry = { email, submittedAt: new Date().toISOString() }
+    const nextEntries = [...entries, newEntry]
+    setEntries(nextEntries)
+    saveNewsletterEntries(nextEntries)
+
+    console.log('Captured newsletter signup:', newEntry)
+    setEmail('')
+    setStatusMessage(
+      `Thanks for signing up! Saved locally under "${NEWSLETTER_STORAGE_KEY}".`,
+    )
+  }
+
   return (
     <div className="page">
       <header className="site-header">
@@ -130,15 +170,45 @@ function App() {
                 support the work happening across our global network.
               </p>
             </div>
-            <form className="newsletter-form">
+            <form className="newsletter-form" onSubmit={handleSubmit}>
               <label htmlFor="email" className="sr-only">
                 Email address
               </label>
-              <input id="email" type="email" name="email" placeholder="you@example.com" required />
+              <input
+                id="email"
+                type="email"
+                name="email"
+                placeholder="you@example.com"
+                required
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
               <button type="submit" className="button button-primary">
                 Sign up
               </button>
             </form>
+            <p className="newsletter-storage-note">
+              Entries stay on this device only and are stored in your browser's local
+              storage using the "{NEWSLETTER_STORAGE_KEY}" key.
+            </p>
+            <p className="newsletter-status" aria-live="polite">
+              {statusMessage || submissionsLabel}
+            </p>
+            {entries.length > 0 && (
+              <details className="newsletter-log">
+                <summary>View stored signups ({entries.length})</summary>
+                <ol>
+                  {entries.map((entry) => (
+                    <li key={`${entry.email}-${entry.submittedAt}`}>
+                      <span className="newsletter-log-email">{entry.email}</span>{' '}
+                      <time dateTime={entry.submittedAt}>
+                        {new Date(entry.submittedAt).toLocaleString()}
+                      </time>
+                    </li>
+                  ))}
+                </ol>
+              </details>
+            )}
           </Layout>
         </section>
       </main>
