@@ -1,7 +1,63 @@
+import { useMemo, useState } from 'react'
+
 import './App.css'
 import Layout from './components/Layout'
 
+const STORAGE_KEY = 'newsletterEntries'
+
 function App() {
+  const [email, setEmail] = useState('')
+  const [entries, setEntries] = useState(() => {
+    if (typeof window === 'undefined') {
+      return []
+    }
+
+    const stored = window.localStorage.getItem(STORAGE_KEY)
+
+    if (!stored) {
+      return []
+    }
+
+    try {
+      const parsed = JSON.parse(stored)
+      return Array.isArray(parsed) ? parsed : []
+    } catch (error) {
+      console.warn('Unable to parse stored newsletter entries', error)
+      return []
+    }
+  })
+
+  const [statusMessage, setStatusMessage] = useState('')
+
+  const submissionsLabel = useMemo(() => {
+    if (entries.length === 0) {
+      return 'No submissions yet'
+    }
+
+    const { email: lastEmail } = entries[entries.length - 1]
+    return `Most recent signup: ${lastEmail}`
+  }, [entries])
+
+  function handleSubmit(event) {
+    event.preventDefault()
+
+    if (!email) {
+      return
+    }
+
+    const newEntry = { email, submittedAt: new Date().toISOString() }
+    const nextEntries = [...entries, newEntry]
+    setEntries(nextEntries)
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextEntries))
+    }
+
+    console.log('Captured newsletter signup:', newEntry)
+    setEmail('')
+    setStatusMessage('Thanks for signing up! Check the console for the stored entry.')
+  }
+
   return (
     <div className="page">
       <header className="site-header">
@@ -130,15 +186,26 @@ function App() {
                 support the work happening across our global network.
               </p>
             </div>
-            <form className="newsletter-form">
+            <form className="newsletter-form" onSubmit={handleSubmit}>
               <label htmlFor="email" className="sr-only">
                 Email address
               </label>
-              <input id="email" type="email" name="email" placeholder="you@example.com" required />
+              <input
+                id="email"
+                type="email"
+                name="email"
+                placeholder="you@example.com"
+                required
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
               <button type="submit" className="button button-primary">
                 Sign up
               </button>
             </form>
+            <p className="newsletter-status" aria-live="polite">
+              {statusMessage || submissionsLabel}
+            </p>
           </Layout>
         </section>
       </main>
