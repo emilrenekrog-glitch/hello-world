@@ -2,11 +2,17 @@ import { useMemo, useState } from 'react'
 
 import './App.css'
 import Layout from './components/Layout'
+import {
+  loadNewsletterEntries,
+  saveNewsletterEntries,
+  NEWSLETTER_STORAGE_KEY,
+} from './utils/newsletterStorage'
 
 const STORAGE_KEY = 'newsletterEntries'
 
 function App() {
   const [email, setEmail] = useState('')
+  const [entries, setEntries] = useState(() => loadNewsletterEntries())
   const [entries, setEntries] = useState(() => {
     if (typeof window === 'undefined') {
       return []
@@ -48,6 +54,13 @@ function App() {
     const newEntry = { email, submittedAt: new Date().toISOString() }
     const nextEntries = [...entries, newEntry]
     setEntries(nextEntries)
+    saveNewsletterEntries(nextEntries)
+
+    console.log('Captured newsletter signup:', newEntry)
+    setEmail('')
+    setStatusMessage(
+      `Thanks for signing up! Saved locally under "${NEWSLETTER_STORAGE_KEY}".`,
+    )
 
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextEntries))
@@ -203,6 +216,28 @@ function App() {
                 Sign up
               </button>
             </form>
+            <p className="newsletter-storage-note">
+              Entries stay on this device only and are stored in your browser's local
+              storage using the "{NEWSLETTER_STORAGE_KEY}" key.
+            </p>
+            <p className="newsletter-status" aria-live="polite">
+              {statusMessage || submissionsLabel}
+            </p>
+            {entries.length > 0 && (
+              <details className="newsletter-log">
+                <summary>View stored signups ({entries.length})</summary>
+                <ol>
+                  {entries.map((entry) => (
+                    <li key={`${entry.email}-${entry.submittedAt}`}>
+                      <span className="newsletter-log-email">{entry.email}</span>{' '}
+                      <time dateTime={entry.submittedAt}>
+                        {new Date(entry.submittedAt).toLocaleString()}
+                      </time>
+                    </li>
+                  ))}
+                </ol>
+              </details>
+            )}
             <p className="newsletter-status" aria-live="polite">
               {statusMessage || submissionsLabel}
             </p>
