@@ -27,12 +27,12 @@ Serve the files from `dist/` with your preferred static host.
 ## Minimal PHP email sign-up form
 
 * [`index.php`](index.php) is a single-file email capture form that runs on any PHP 8+ host.
-* Submissions are validated server-side and appended to `emails.txt` in the same directory with an ISO-8601 timestamp.
-* The generated `emails.txt` file is ignored by Git to keep accidental signups out of version control.
+* Submissions are validated server-side and appended to `email.txt` in the same directory with an ISO-8601 timestamp.
+* The generated `email.txt` file is ignored by Git to keep accidental signups out of version control.
 
 ### Deploying the PHP form
 
-1. Copy `index.php` (and an optional empty `emails.txt`) to a PHP-enabled web server.
+1. Copy `index.php` (and an optional empty `email.txt`) to a PHP-enabled web server.
 2. Ensure the directory is writable by the web server user so new signups can be appended.
 3. Visit the page and submit an email address—the form handles everything else.
 
@@ -43,7 +43,7 @@ If you prefer to store addresses in a GitHub repository, replace the `file_put_c
 ```php
 $token = getenv('GITHUB_TOKEN');
 $repo = 'yourusername/newsletter-data';
-$path = 'emails.txt';
+$path = 'email.txt';
 $emailLine = $emailValue . ',' . date('c') . "\n";
 
 $apiUrl = "https://api.github.com/repos/$repo/contents/$path";
