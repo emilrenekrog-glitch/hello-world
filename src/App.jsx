@@ -13,7 +13,6 @@ function App() {
             <a href="#vision">Vision</a>
             <a href="#initiatives">Initiatives</a>
             <a href="#voices">Voices</a>
-            <a href="#connect">Connect</a>
           </div>
         </Layout>
       </header>
@@ -120,47 +119,6 @@ function App() {
           </Layout>
         </section>
 
-        <section id="connect" className="section section-alt">
-          <Layout className="connect-content">
-            <div className="section-header">
-              <p className="section-eyebrow">Stay in the loop</p>
-              <h2>Let’s keep in touch</h2>
-              <p>
-                Drop your email to receive monthly updates from the BluePlanet crew. We’ll
-                share upcoming initiatives, community highlights, and opportunities to get
-                involved.
-              </p>
-            </div>
-            <div className="newsletter-card">
-              <h3>Join the newsletter</h3>
-              <p>
-                Submissions go directly to our simple PHP signup endpoint and are stored in
-                <code>utilities/emails.txt</code> so nothing gets lost.
-              </p>
-              <form className="newsletter-form" method="POST" action="/index.php">
-                <label className="sr-only" htmlFor="newsletter-email">
-                  Email address
-                </label>
-                <div className="newsletter-fields">
-                  <input
-                    type="email"
-                    id="newsletter-email"
-                    name="email"
-                    placeholder="you@example.com"
-                    required
-                  />
-                  <button type="submit" className="button button-primary newsletter-submit">
-                    Subscribe
-                  </button>
-                </div>
-              </form>
-              <p className="newsletter-note">
-                After submitting you’ll land on the PHP form for confirmation. Manage the
-                stored emails anytime from <code>utilities/emails.txt</code>.
-              </p>
-            </div>
-          </Layout>
-        </section>
       </main>
 
       <footer className="site-footer">
@@ -169,7 +127,6 @@ function App() {
           <div className="footer-links">
             <a href="#">Privacy</a>
             <a href="#">Terms</a>
-            <a href="#">Contact</a>
           </div>
         </Layout>
       </footer>
