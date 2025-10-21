@@ -1,16 +1,41 @@
-# React + Vite
+# BluePlanet Newsletter Demo
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project is a Vite-powered React application that showcases the BluePlanet landing page. The newsletter subscription form captures email addresses and stores them on disk inside the repository so they can be reviewed or committed as part of your project history.
 
-Currently, two official plugins are available:
+## Getting started
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+1. Install dependencies (already provided in this workspace):
 
-## React Compiler
+   ```bash
+   npm install
+   ```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+2. Run the storage API so newsletter submissions can be persisted to the repository:
 
-## Expanding the ESLint configuration
+   ```bash
+   npm run server
+   ```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+   The API listens on <http://localhost:3001> and appends signups to [`data/newsletter-signups.json`](data/newsletter-signups.json).
+
+3. In a separate terminal, launch the React development server:
+
+   ```bash
+   npm run dev
+   ```
+
+   The Vite dev server proxies `/api` requests to the storage API, so the contact form can save and retrieve entries without additional configuration.
+
+## Production build
+
+To create an optimized production build of the site, run:
+
+```bash
+npm run build
+```
+
+Serve the static files from `dist/` and run the newsletter storage server (`npm run server`) alongside it to capture subscription requests.
+
+## Data storage
+
+Newsletter signups are stored as JSON objects in [`data/newsletter-signups.json`](data/newsletter-signups.json). Each entry includes the submitted email address and an ISO-8601 timestamp. You can commit this file to source control to preserve signups captured during development or testing.

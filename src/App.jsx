@@ -1,17 +1,59 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import './App.css'
 import Layout from './components/Layout'
 import {
   loadNewsletterEntries,
-  saveNewsletterEntries,
-  NEWSLETTER_STORAGE_KEY,
+  saveNewsletterEntry,
+  NEWSLETTER_FILE_PATH,
 } from './utils/newsletterStorage'
 
 function App() {
   const [email, setEmail] = useState('')
-  const [entries, setEntries] = useState(() => loadNewsletterEntries())
+  const [entries, setEntries] = useState([])
   const [statusMessage, setStatusMessage] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function fetchEntries() {
+      setStatusMessage('Loading stored signups…')
+
+      try {
+        const storedEntries = await loadNewsletterEntries()
+
+        if (!isMounted) {
+          return
+        }
+
+        setEntries(storedEntries)
+
+        if (storedEntries.length > 0) {
+          const pluralized = storedEntries.length === 1 ? 'signup' : 'signups'
+          setStatusMessage(
+            `Loaded ${storedEntries.length} stored ${pluralized} from "${NEWSLETTER_FILE_PATH}".`,
+          )
+        } else {
+          setStatusMessage('')
+        }
+      } catch (error) {
+        console.error('Unable to load stored newsletter signups', error)
+
+        if (isMounted) {
+          setStatusMessage(
+            'Unable to load previous signups from the repository. New submissions will still be attempted.',
+          )
+        }
+      }
+    }
+
+    fetchEntries()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const submissionsLabel = useMemo(() => {
     if (entries.length === 0) {
@@ -22,7 +64,7 @@ function App() {
     return `Most recent signup: ${lastEmail}`
   }, [entries])
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
 
     const trimmedEmail = email.trim()
@@ -31,16 +73,27 @@ function App() {
       return
     }
 
-    const newEntry = { email: trimmedEmail, submittedAt: new Date().toISOString() }
-    const nextEntries = [...entries, newEntry]
-    setEntries(nextEntries)
-    saveNewsletterEntries(nextEntries)
+    setIsSubmitting(true)
+    setStatusMessage('Saving your email…')
 
-    console.log('Captured newsletter signup:', newEntry)
-    setEmail('')
-    setStatusMessage(
-      `Thanks for signing up! Saved locally under "${NEWSLETTER_STORAGE_KEY}".`,
-    )
+    try {
+      const newEntry = await saveNewsletterEntry(trimmedEmail)
+      setEntries((previousEntries) => [...previousEntries, newEntry])
+      console.log('Captured newsletter signup:', newEntry)
+      setEmail('')
+      setStatusMessage(`Thanks for signing up! Saved in "${NEWSLETTER_FILE_PATH}".`)
+    } catch (error) {
+      console.error('Failed to save newsletter signup', error)
+
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : 'Unable to save your email right now. Please try again later.'
+
+      setStatusMessage(message)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -183,14 +236,19 @@ function App() {
                 required
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
+                disabled={isSubmitting}
               />
-              <button type="submit" className="button button-primary">
-                Sign up
+              <button
+                type="submit"
+                className="button button-primary"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Saving…' : 'Sign up'}
               </button>
             </form>
             <p className="newsletter-storage-note">
-              Entries stay on this device only and are stored in your browser's local
-              storage using the "{NEWSLETTER_STORAGE_KEY}" key.
+              Signups are stored directly in the repository inside the{' '}
+              <code>{NEWSLETTER_FILE_PATH}</code> file.
             </p>
             {entries.length > 0 && (
               <details className="newsletter-log">
