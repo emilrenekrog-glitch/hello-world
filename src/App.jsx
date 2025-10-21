@@ -123,42 +123,40 @@ function App() {
         <section id="connect" className="section section-alt">
           <Layout className="connect-content">
             <div className="section-header">
-              <h2>Simple PHP newsletter capture</h2>
+              <p className="section-eyebrow">Stay in the loop</p>
+              <h2>Let’s keep in touch</h2>
               <p>
-                Host the provided <code>index.php</code> file on your server to collect
-                newsletter signups. Each valid submission is appended to
-                <code>utilities/emails.txt</code> for easy review.
+                Drop your email to receive monthly updates from the BluePlanet crew. We’ll
+                share upcoming initiatives, community highlights, and opportunities to get
+                involved.
               </p>
             </div>
-            <div className="connect-note">
+            <div className="newsletter-card">
+              <h3>Join the newsletter</h3>
               <p>
-                The snippet below shows the core logic responsible for validating addresses,
-                preparing the storage directory, and persisting each signup with a timestamp.
+                Submissions go directly to our simple PHP signup endpoint and are stored in
+                <code>utilities/emails.txt</code> so nothing gets lost.
               </p>
-              <pre className="code-block">
-                <code>{`<?php
-$storageDir = __DIR__ . '/utilities';
-if (!is_dir($storageDir) && !mkdir($storageDir, 0755, true) && !is_dir($storageDir)) {
-    $message = 'Unable to prepare storage right now. Please try again later.';
-}
-$file = $storageDir . '/emails.txt';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL);
-
-    if ($email) {
-        $line = $email . ',' . date('c') . PHP_EOL;
-        file_put_contents($file, $line, FILE_APPEND | LOCK_EX);
-        $message = "Thanks! You're signed up.";
-    } else {
-        $message = 'Please enter a valid email.';
-    }
-}
-?>`}</code>
-              </pre>
-              <p>
-                Pair the markup inside <code>index.php</code> with this logic to render a form that
-                posts back to itself and records every subscriber.
+              <form className="newsletter-form" method="POST" action="/index.php">
+                <label className="sr-only" htmlFor="newsletter-email">
+                  Email address
+                </label>
+                <div className="newsletter-fields">
+                  <input
+                    type="email"
+                    id="newsletter-email"
+                    name="email"
+                    placeholder="you@example.com"
+                    required
+                  />
+                  <button type="submit" className="button button-primary newsletter-submit">
+                    Subscribe
+                  </button>
+                </div>
+              </form>
+              <p className="newsletter-note">
+                After submitting you’ll land on the PHP form for confirmation. Manage the
+                stored emails anytime from <code>utilities/emails.txt</code>.
               </p>
             </div>
           </Layout>
