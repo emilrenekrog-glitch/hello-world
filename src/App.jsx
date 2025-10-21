@@ -3,16 +3,22 @@ import { useState } from 'react'
 import './App.css'
 import Layout from './components/Layout'
 import {
-  appendNewsletterLogEntry,
-  downloadNewsletterLog,
-  NEWSLETTER_LOG_STORAGE_KEY,
-} from './utils/newsletterLogger'
+  loadNewsletterEntries,
+  saveNewsletterEntries,
+  NEWSLETTER_STORAGE_KEY,
+} from './utils/newsletterStorage'
 
 function App() {
   const [email, setEmail] = useState('')
-  const [statusMessage, setStatusMessage] = useState(
-    'No signups captured yet. Entries are logged privately.',
-  )
+  const [entries, setEntries] = useState(() => loadNewsletterEntries())
+  const [statusMessage, setStatusMessage] = useState('')
+
+    if (!trimmedEmail) {
+      return
+    }
+
+    const newEntry = { email: trimmedEmail, submittedAt: new Date().toISOString() }
+    const { saved, logLine } = appendNewsletterLogEntry(newEntry)
 
   function handleSubmit(event) {
     event.preventDefault()
@@ -24,30 +30,15 @@ function App() {
     }
 
     const newEntry = { email: trimmedEmail, submittedAt: new Date().toISOString() }
-    const { saved, logLine } = appendNewsletterLogEntry(newEntry)
+    const nextEntries = [...entries, newEntry]
+    setEntries(nextEntries)
+    saveNewsletterEntries(nextEntries)
 
-    if (!saved) {
-      setStatusMessage(
-        'We could not record your signup. Please allow browser storage and try again.',
-      )
-      return
-    }
-
-    console.info('Captured newsletter signup in private log:', logLine)
+    console.log('Captured newsletter signup:', newEntry)
     setEmail('')
     setStatusMessage(
       `Thanks for signing up! Your email is stored privately in the "${NEWSLETTER_LOG_STORAGE_KEY}" log.`,
     )
-  }
-
-  function handleDownloadLog() {
-    const downloaded = downloadNewsletterLog()
-
-    if (downloaded) {
-      setStatusMessage('A private signup log has been downloaded to your device.')
-    } else {
-      setStatusMessage('No log entries available to download just yet.')
-    }
   }
 
   return (
@@ -196,15 +187,24 @@ function App() {
               </button>
             </form>
             <p className="newsletter-storage-note">
-              {`Entries stay on this device only and are stored privately using the "${NEWSLETTER_LOG_STORAGE_KEY}" log key.`}
+              Entries stay on this device only and are stored in your browser's local
+              storage using the "{NEWSLETTER_STORAGE_KEY}" key.
             </p>
-            <button
-              type="button"
-              className="button button-secondary newsletter-download-log"
-              onClick={handleDownloadLog}
-            >
-              Download signup log
-            </button>
+            {entries.length > 0 && (
+              <details className="newsletter-log">
+                <summary>View stored signups ({entries.length})</summary>
+                <ol>
+                  {entries.map((entry) => (
+                    <li key={`${entry.email}-${entry.submittedAt}`}>
+                      <span className="newsletter-log-email">{entry.email}</span>{' '}
+                      <time dateTime={entry.submittedAt}>
+                        {new Date(entry.submittedAt).toLocaleString()}
+                      </time>
+                    </li>
+                  ))}
+                </ol>
+              </details>
+            )}
             <p className="newsletter-status" aria-live="polite">
               {statusMessage}
             </p>
