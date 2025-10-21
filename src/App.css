@@ -175,6 +175,12 @@ main {
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }
 
+.button[disabled] {
+  cursor: not-allowed;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
 .button:focus-visible {
   outline: 3px solid rgba(56, 189, 248, 0.6);
   outline-offset: 2px;
@@ -342,6 +348,15 @@ main {
   margin-top: 0.75rem;
   font-size: 0.9rem;
   color: rgba(148, 163, 184, 0.9);
+}
+
+.newsletter-storage-note code {
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, 'Liberation Mono', 'Courier New', monospace;
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 6px;
+  padding: 0.1rem 0.4rem;
+  color: inherit;
 }
 
 .newsletter-status {

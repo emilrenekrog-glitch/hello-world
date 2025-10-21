@@ -1,43 +1,67 @@
-const NEWSLETTER_STORAGE_KEY = 'newsletterEntries'
+const API_ENDPOINT = '/api/newsletter'
 
-function getStorage() {
-  if (typeof window === 'undefined' || !window.localStorage) {
+export const NEWSLETTER_FILE_PATH = 'data/newsletter-signups.json'
+
+async function parseJsonResponse(response) {
+  const text = await response.text()
+
+  if (!text) {
     return null
   }
 
-  return window.localStorage
-}
-
-export function loadNewsletterEntries() {
-  const storage = getStorage()
-
-  if (!storage) {
-    return []
-  }
-
-  const stored = storage.getItem(NEWSLETTER_STORAGE_KEY)
-
-  if (!stored) {
-    return []
-  }
-
   try {
-    const parsed = JSON.parse(stored)
-    return Array.isArray(parsed) ? parsed : []
+    return JSON.parse(text)
   } catch (error) {
-    console.warn('Unable to parse stored newsletter entries', error)
-    return []
+    console.warn('Unable to parse API response as JSON', error)
+    return null
   }
 }
 
-export function saveNewsletterEntries(entries) {
-  const storage = getStorage()
+export async function loadNewsletterEntries() {
+  try {
+    const response = await fetch(API_ENDPOINT, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    })
 
-  if (!storage) {
-    return
+    const data = await parseJsonResponse(response)
+
+    if (!response.ok) {
+      const message = data && typeof data.message === 'string' ? data.message : 'Failed to load newsletter entries.'
+      throw new Error(message)
+    }
+
+    return Array.isArray(data) ? data : []
+  } catch (error) {
+    console.error('Unable to load newsletter entries from the API', error)
+    throw error
   }
-
-  storage.setItem(NEWSLETTER_STORAGE_KEY, JSON.stringify(entries))
 }
 
-export { NEWSLETTER_STORAGE_KEY }
+export async function saveNewsletterEntry(email) {
+  const response = await fetch(API_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email }),
+  })
+
+  const data = await parseJsonResponse(response)
+
+  if (!response.ok) {
+    const message = data && typeof data.message === 'string' ? data.message : 'Failed to save newsletter entry.'
+    const error = new Error(message)
+    error.status = response.status
+    throw error
+  }
+
+  if (!data || typeof data !== 'object') {
+    throw new Error('Unexpected response from the newsletter API.')
+  }
+
+  return data
+}
+
+export { API_ENDPOINT }
