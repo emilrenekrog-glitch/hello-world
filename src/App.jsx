@@ -123,23 +123,42 @@ function App() {
         <section id="connect" className="section section-alt">
           <Layout className="connect-content">
             <div className="section-header">
-              <p className="section-eyebrow">Stay in the loop</p>
-              <h2>Simple email capture for any PHP host</h2>
+              <h2>Simple PHP newsletter capture</h2>
               <p>
-                Deploy the accompanying <code>index.php</code> file on a PHP-enabled server to
-                collect newsletter signups without any external dependencies or custom APIs.
+                Host the provided <code>index.php</code> file on your server to collect
+                newsletter signups. Each valid submission is appended to
+                <code>utilities/emails.txt</code> for easy review.
               </p>
             </div>
             <div className="connect-note">
               <p>
-                The standalone PHP page validates each submission and appends the email with a
-                timestamp to <code>emails.txt</code>. Review the file later or adapt the storage
-                block to forward signups to your preferred service.
+                The snippet below shows the core logic responsible for validating addresses,
+                preparing the storage directory, and persisting each signup with a timestamp.
               </p>
+              <pre className="code-block">
+                <code>{`<?php
+$storageDir = __DIR__ . '/utilities';
+if (!is_dir($storageDir) && !mkdir($storageDir, 0755, true) && !is_dir($storageDir)) {
+    $message = 'Unable to prepare storage right now. Please try again later.';
+}
+$file = $storageDir . '/emails.txt';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL);
+
+    if ($email) {
+        $line = $email . ',' . date('c') . PHP_EOL;
+        file_put_contents($file, $line, FILE_APPEND | LOCK_EX);
+        $message = "Thanks! You're signed up.";
+    } else {
+        $message = 'Please enter a valid email.';
+    }
+}
+?>`}</code>
+              </pre>
               <p>
-                Want the addresses in version control instead? Replace the file write with the
-                GitHub API snippet documented inside <code>index.php</code> to push each signup to
-                a repository of your choice.
+                Pair the markup inside <code>index.php</code> with this logic to render a form that
+                posts back to itself and records every subscriber.
               </p>
             </div>
           </Layout>
