@@ -2,11 +2,9 @@
 $message = '';
 $emailValue = '';
 
-$storageDir = __DIR__ . '/utilities';
-if (!is_dir($storageDir) && !mkdir($storageDir, 0755, true) && !is_dir($storageDir)) {
-    $message = 'Unable to prepare storage right now. Please try again later.';
-}
-$file = $storageDir . '/email.txt';
+$githubToken = getenv('GITHUB_TOKEN') ?: '';
+$githubRepo = getenv('GITHUB_REPO') ?: '';
+$githubPath = getenv('GITHUB_PATH') ?: 'email.txt';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $emailValue = trim($_POST['email'] ?? '');
@@ -14,16 +12,134 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$email) {
         $message = 'Please enter a valid email.';
-    } elseif ($message === '') {
+    } elseif ($githubToken === '' || $githubRepo === '') {
+        $message = 'Signup storage is not configured right now. Please try again later.';
+    } else {
         $line = $email . ',' . date('c') . PHP_EOL;
+        $errorMessage = 'Unable to save your email right now. Please try again later.';
 
-        if (file_put_contents($file, $line, FILE_APPEND | LOCK_EX) === false) {
-            $message = 'Unable to save your email right now. Please try again later.';
-        } else {
+        if (appendSignupToGitHub($email, $line, $githubToken, $githubRepo, $githubPath, $errorMessage)) {
             $message = "Thanks! You're signed up.";
             $emailValue = '';
+        } else {
+            $message = $errorMessage;
         }
     }
+}
+
+function appendSignupToGitHub(
+    string $email,
+    string $line,
+    string $token,
+    string $repo,
+    string $path,
+    string &$errorMessage
+): bool {
+    $errorMessage = 'Unable to save your email right now. Please try again later.';
+    $encodedPath = implode('/', array_map('rawurlencode', explode('/', $path)));
+    $apiUrl = "https://api.github.com/repos/{$repo}/contents/{$encodedPath}";
+    $headers = [
+        'Authorization: token ' . $token,
+        'User-Agent: SimpleSignup',
+        'Accept: application/vnd.github+json',
+        'Content-Type: application/json',
+    ];
+    $headerString = implode("\r\n", $headers) . "\r\n";
+
+    $baseContext = [
+        'http' => [
+            'header' => $headerString,
+            'ignore_errors' => true,
+            'timeout' => 10,
+        ],
+    ];
+
+    $maxAttempts = 3;
+
+    for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
+        $getContext = $baseContext;
+        $getContext['http']['method'] = 'GET';
+        $current = @file_get_contents($apiUrl, false, stream_context_create($getContext));
+        $responseHeaders = $http_response_header ?? [];
+
+        if ($current === false && $responseHeaders === []) {
+            return false;
+        }
+
+        $statusLine = $responseHeaders[0] ?? '';
+        $existing = '';
+        $sha = null;
+
+        if ($statusLine !== '') {
+            if (str_contains($statusLine, '200')) {
+                $data = json_decode($current, true);
+                if (!is_array($data) || !isset($data['content'])) {
+                    return false;
+                }
+
+                $decoded = base64_decode((string)($data['content'] ?? ''), true);
+                if ($decoded === false) {
+                    return false;
+                }
+
+                $existing = $decoded;
+                $sha = $data['sha'] ?? null;
+            } elseif (str_contains($statusLine, '404')) {
+                // File does not exist yet; treat as empty content.
+            } elseif (str_contains($statusLine, '401') || str_contains($statusLine, '403')) {
+                $errorMessage = 'Signup storage credentials are invalid. Please try again later.';
+                return false;
+            } else {
+                return false;
+            }
+        }
+
+        $payload = [
+            'message' => 'Add signup for ' . $email,
+            'content' => base64_encode($existing . $line),
+        ];
+
+        if ($sha !== null) {
+            $payload['sha'] = $sha;
+        }
+
+        $payloadJson = json_encode($payload, JSON_UNESCAPED_SLASHES);
+        if ($payloadJson === false) {
+            return false;
+        }
+
+        $putContext = $baseContext;
+        $putContext['http']['method'] = 'PUT';
+        $putContext['http']['content'] = $payloadJson;
+
+        $result = @file_get_contents($apiUrl, false, stream_context_create($putContext));
+        $putHeaders = $http_response_header ?? [];
+
+        if ($result === false && $putHeaders === []) {
+            return false;
+        }
+
+        $putStatus = $putHeaders[0] ?? '';
+
+        if ($putStatus !== '') {
+            if (str_contains($putStatus, '200') || str_contains($putStatus, '201')) {
+                return true;
+            }
+
+            if (str_contains($putStatus, '409')) {
+                // Another process updated the file; retry with the new state.
+                continue;
+            }
+
+            if (str_contains($putStatus, '401') || str_contains($putStatus, '403')) {
+                $errorMessage = 'Signup storage credentials are invalid. Please try again later.';
+            }
+        }
+
+        return false;
+    }
+
+    return false;
 }
 ?>
 <!DOCTYPE html>
