@@ -2,47 +2,62 @@ import { useState } from 'react'
 import './App.css'
 import Layout from './components/Layout'
 
-const CONTACT_STORAGE_KEY = 'blueplanet-contact-submissions'
-
-const readSavedSubmissions = () => {
-  if (typeof window === 'undefined') {
-    return []
+const CONTACT_ENDPOINT = (() => {
+  const configuredEndpoint = import.meta.env.VITE_CONTACT_ENDPOINT
+  if (typeof configuredEndpoint === 'string' && configuredEndpoint.trim() !== '') {
+    return configuredEndpoint.trim()
   }
 
-  try {
-    const storedValue = window.localStorage.getItem(CONTACT_STORAGE_KEY)
-
-    if (!storedValue) {
-      return []
-    }
-
-    const parsedValue = JSON.parse(storedValue)
-
-    return Array.isArray(parsedValue) ? parsedValue : []
-  } catch (error) {
-    console.error('Failed to parse saved contact submissions', error)
-    return []
-  }
-}
-
-const persistSubmission = (submission) => {
-  if (typeof window === 'undefined') {
-    return false
-  }
-
-  try {
-    const existingSubmissions = readSavedSubmissions()
-    const updatedSubmissions = [...existingSubmissions, submission]
-    window.localStorage.setItem(CONTACT_STORAGE_KEY, JSON.stringify(updatedSubmissions))
-    return true
-  } catch (error) {
-    console.error('Failed to save contact submission', error)
-    return false
-  }
-}
+  return '/contact-submit.php'
+})()
 
 const createInitialFormState = () => ({ name: '', email: '', message: '' })
 const createInitialStatusState = () => ({ state: 'idle', message: '' })
+
+const submitContactForm = async ({ name, email, message }) => {
+  const body = new URLSearchParams()
+  body.set('name', name)
+  body.set('email', email)
+  body.set('message', message)
+
+  let response
+
+  try {
+    response = await fetch(CONTACT_ENDPOINT, {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+      body,
+    })
+  } catch (error) {
+    console.error('Network error while submitting contact form', error)
+    throw new Error('We could not submit your message. Please check your connection and try again.')
+  }
+
+  let payload = null
+  const contentType = response.headers.get('content-type') ?? ''
+
+  if (contentType.includes('application/json')) {
+    try {
+      payload = await response.json()
+    } catch (error) {
+      console.error('Failed to parse contact submission response', error)
+    }
+  }
+
+  if (!response.ok) {
+    const messageFromServer = payload?.message
+    throw new Error(messageFromServer || 'We could not save your message. Please try again later.')
+  }
+
+  if (payload?.success === false) {
+    throw new Error(payload.message || 'We could not save your message. Please try again later.')
+  }
+
+  return {
+    success: true,
+    message: payload?.message || 'Thanks! We received your message and will be in touch soon.',
+  }
+}
 
 function App() {
   const [formData, setFormData] = useState(createInitialFormState)
@@ -58,7 +73,7 @@ function App() {
     }
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
 
     if (isSaving) {
@@ -83,27 +98,27 @@ function App() {
     }
 
     setIsSaving(true)
+    setFormData(trimmedData)
 
     try {
-      const submissionToSave = {
-        ...trimmedData,
-        submittedAt: new Date().toISOString(),
-      }
+      const result = await submitContactForm(trimmedData)
 
-      const wasSaved = persistSubmission(submissionToSave)
+      setStatus({
+        state: 'success',
+        message: result.message,
+      })
+      setFormData(createInitialFormState())
+    } catch (error) {
+      console.error('Failed to submit contact form', error)
+      const fallbackMessage =
+        error instanceof Error && error.message
+          ? error.message
+          : 'We could not save your message. Please try again later.'
 
-      if (wasSaved) {
-        setStatus({
-          state: 'success',
-          message: 'Thanks! We saved your message and will be in touch soon.',
-        })
-        setFormData(createInitialFormState())
-      } else {
-        setStatus({
-          state: 'error',
-          message: 'We could not save your message. Please try again.',
-        })
-      }
+      setStatus({
+        state: 'error',
+        message: fallbackMessage,
+      })
     } finally {
       setIsSaving(false)
     }

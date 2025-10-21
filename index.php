@@ -6,7 +6,7 @@ $storageDir = __DIR__ . '/utilities';
 if (!is_dir($storageDir) && !mkdir($storageDir, 0755, true) && !is_dir($storageDir)) {
     $message = 'Unable to prepare storage right now. Please try again later.';
 }
-$file = $storageDir . '/emails.txt';
+$file = $storageDir . '/email.txt';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $emailValue = trim($_POST['email'] ?? '');
