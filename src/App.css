@@ -319,89 +319,29 @@ main {
   color: rgba(148, 163, 184, 0.8);
 }
 
-.newsletter {
+.connect-content {
   display: grid;
   gap: 2.5rem;
-  align-items: center;
+  align-items: flex-start;
 }
 
-.newsletter-form {
-  display: flex;
-  flex-wrap: wrap;
+.connect-note {
+  display: grid;
   gap: 1rem;
+  padding: 2rem;
+  border-radius: 1.25rem;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: rgba(226, 232, 240, 0.85);
 }
 
-.newsletter-form input {
-  flex: 1 1 220px;
-  padding: 0.9rem 1.1rem;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  background: rgba(15, 23, 42, 0.6);
-  color: inherit;
-}
-
-.newsletter-form input::placeholder {
-  color: rgba(148, 163, 184, 0.8);
-}
-
-.newsletter-storage-note {
-  margin-top: 0.75rem;
-  font-size: 0.9rem;
-  color: rgba(148, 163, 184, 0.9);
-}
-
-.newsletter-storage-note code {
+.connect-note code {
   font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco,
     Consolas, 'Liberation Mono', 'Courier New', monospace;
-  background: rgba(148, 163, 184, 0.2);
+  background: rgba(148, 163, 184, 0.18);
   border-radius: 6px;
   padding: 0.1rem 0.4rem;
   color: inherit;
-}
-
-.newsletter-status {
-  margin-top: 0.5rem;
-  font-weight: 600;
-}
-
-.newsletter-log {
-  margin-top: 1rem;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  border-radius: 12px;
-  padding: 1rem 1.25rem;
-  text-align: left;
-}
-
-.newsletter-log summary {
-  cursor: pointer;
-  font-weight: 600;
-  list-style: none;
-}
-
-.newsletter-log summary::-webkit-details-marker {
-  display: none;
-}
-
-.newsletter-log summary::after {
-  content: '▾';
-  margin-left: 0.5rem;
-  font-size: 0.75em;
-}
-
-.newsletter-log[open] summary::after {
-  content: '▴';
-}
-
-.newsletter-log ol {
-  margin-top: 0.75rem;
-  padding-left: 1.25rem;
-  display: grid;
-  gap: 0.5rem;
-}
-
-.newsletter-log-email {
-  font-weight: 600;
 }
 
 .site-footer {
@@ -423,17 +363,6 @@ main {
   gap: 1.25rem;
   font-size: 0.9rem;
   color: rgba(148, 163, 184, 0.85);
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  border: 0;
 }
 
 @media (max-width: 720px) {
@@ -465,15 +394,12 @@ main {
     justify-content: center;
   }
 
-  .newsletter {
+  .connect-content {
     text-align: center;
+    gap: 2rem;
   }
 
-  .newsletter-form {
-    justify-content: center;
-  }
-
-  .newsletter-log {
+  .connect-note {
     text-align: left;
   }
 
