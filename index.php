@@ -1,8 +1,10 @@
 <?php
-// Simple email signup form that saves to a file (or you could later push to GitHub)
+// Simple email signup form that saves to utilities/emails.txt
 
 $message = '';
 $emailValue = '';
+$storageDir = __DIR__ . '/utilities';
+$file = $storageDir . '/emails.txt';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $emailValue = trim($_POST['email'] ?? '');
@@ -10,14 +12,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!filter_var($emailValue, FILTER_VALIDATE_EMAIL)) {
         $message = 'Please enter a valid email.';
     } else {
-        $file = __DIR__ . '/emails.txt';
-        $line = $emailValue . ',' . date('c') . PHP_EOL;
-
-        if (file_put_contents($file, $line, FILE_APPEND | LOCK_EX) === false) {
-            $message = 'Unable to save your email right now. Please try again later.';
+        if (!is_dir($storageDir) && !mkdir($storageDir, 0755, true) && !is_dir($storageDir)) {
+            $message = 'Unable to prepare storage right now. Please try again later.';
         } else {
-            $message = "Thanks! You're signed up.";
-            $emailValue = '';
+            $line = $emailValue . ',' . date('c') . PHP_EOL;
+
+            if (file_put_contents($file, $line, FILE_APPEND | LOCK_EX) === false) {
+                $message = 'Unable to save your email right now. Please try again later.';
+            } else {
+                $message = "Thanks! You're signed up.";
+                $emailValue = '';
+            }
         }
     }
 }

@@ -344,6 +344,25 @@ main {
   color: inherit;
 }
 
+.code-block {
+  margin: 0;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.code-block code {
+  display: block;
+  white-space: pre;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
 .site-footer {
   padding: 2.5rem 0;
   background: rgba(2, 6, 23, 0.85);
