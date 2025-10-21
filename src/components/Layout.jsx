@@ -1,4 +1,5 @@
-const Layout = ({ as: Component = 'div', className = '', children, ...rest }) => {
+const Layout = ({ as = 'div', className = '', children, ...rest }) => {
+  const Component = as
   const classes = ['layout-container', className].filter(Boolean).join(' ')
 
   return (
