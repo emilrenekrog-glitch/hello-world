@@ -24,4 +24,4 @@ dist-ssr
 *.sw?
 
 # PHP signup storage file
-emails.txt
+email.txt
