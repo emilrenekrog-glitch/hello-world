@@ -148,18 +148,6 @@ function App() {
                 flourish. Our team will reach out within two business days to continue the
                 conversation.
               </p>
-              <dl className="contact-details">
-                <div>
-                  <dt>Email</dt>
-                  <dd>
-                    <a href="mailto:hello@blueplanet.org">hello@blueplanet.org</a>
-                  </dd>
-                </div>
-                <div>
-                  <dt>Headquarters</dt>
-                  <dd>Seattle, Washington</dd>
-                </div>
-              </dl>
             </div>
             <form className="contact-form" onSubmit={handleSubmit} noValidate>
               <fieldset className="contact-fieldset">
