@@ -1,7 +1,114 @@
+import { useState } from 'react'
 import './App.css'
 import Layout from './components/Layout'
 
+const CONTACT_STORAGE_KEY = 'blueplanet-contact-submissions'
+
+const readSavedSubmissions = () => {
+  if (typeof window === 'undefined') {
+    return []
+  }
+
+  try {
+    const storedValue = window.localStorage.getItem(CONTACT_STORAGE_KEY)
+
+    if (!storedValue) {
+      return []
+    }
+
+    const parsedValue = JSON.parse(storedValue)
+
+    return Array.isArray(parsedValue) ? parsedValue : []
+  } catch (error) {
+    console.error('Failed to parse saved contact submissions', error)
+    return []
+  }
+}
+
+const persistSubmission = (submission) => {
+  if (typeof window === 'undefined') {
+    return false
+  }
+
+  try {
+    const existingSubmissions = readSavedSubmissions()
+    const updatedSubmissions = [...existingSubmissions, submission]
+    window.localStorage.setItem(CONTACT_STORAGE_KEY, JSON.stringify(updatedSubmissions))
+    return true
+  } catch (error) {
+    console.error('Failed to save contact submission', error)
+    return false
+  }
+}
+
+const createInitialFormState = () => ({ name: '', email: '', message: '' })
+const createInitialStatusState = () => ({ state: 'idle', message: '' })
+
 function App() {
+  const [formData, setFormData] = useState(createInitialFormState)
+  const [status, setStatus] = useState(createInitialStatusState)
+  const [isSaving, setIsSaving] = useState(false)
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target
+    setFormData((previous) => ({ ...previous, [name]: value }))
+
+    if (status.state !== 'idle') {
+      setStatus(createInitialStatusState())
+    }
+  }
+
+  const handleSubmit = (event) => {
+    event.preventDefault()
+
+    if (isSaving) {
+      return
+    }
+
+    setStatus(createInitialStatusState())
+
+    const trimmedData = {
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      message: formData.message.trim(),
+    }
+
+    if (!trimmedData.name || !trimmedData.email || !trimmedData.message) {
+      setStatus({
+        state: 'error',
+        message: 'Please fill out every field so we can follow up.',
+      })
+      setFormData(trimmedData)
+      return
+    }
+
+    setIsSaving(true)
+
+    try {
+      const submissionToSave = {
+        ...trimmedData,
+        submittedAt: new Date().toISOString(),
+      }
+
+      const wasSaved = persistSubmission(submissionToSave)
+
+      if (wasSaved) {
+        setStatus({
+          state: 'success',
+          message: 'Thanks! We saved your message and will be in touch soon.',
+        })
+        setFormData(createInitialFormState())
+      } else {
+        setStatus({
+          state: 'error',
+          message: 'We could not save your message. Please try again.',
+        })
+      }
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   return (
     <div className="page">
       <header className="site-header">
@@ -13,6 +120,7 @@ function App() {
             <a href="#vision">Vision</a>
             <a href="#initiatives">Initiatives</a>
             <a href="#voices">Voices</a>
+            <a href="#contact">Contact</a>
           </div>
         </Layout>
       </header>
@@ -116,6 +224,80 @@ function App() {
                 </figcaption>
               </figure>
             </div>
+          </Layout>
+        </section>
+
+        <section id="contact" className="section section-alt contact-section">
+          <Layout className="contact-grid">
+            <div className="contact-intro">
+              <p className="section-eyebrow">Contact us</p>
+              <h2>Ready to collaborate?</h2>
+              <p>
+                Share a challenge, an idea, or a location where we can help ecosystems
+                flourish. Our team will reach out within two business days to continue the
+                conversation.
+              </p>
+            </div>
+            <form
+              className="contact-form"
+              onSubmit={handleSubmit}
+              noValidate
+              aria-busy={isSaving}
+            >
+              <fieldset className="contact-fieldset" disabled={isSaving}>
+                <legend className="sr-only">Send us a message</legend>
+                <div className="input-group">
+                  <label htmlFor="contact-name">Full name</label>
+                  <input
+                    id="contact-name"
+                    name="name"
+                    type="text"
+                    autoComplete="name"
+                    placeholder="Ada Lovelace"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="input-group">
+                  <label htmlFor="contact-email">Email</label>
+                  <input
+                    id="contact-email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="input-group">
+                  <label htmlFor="contact-message">How can we help?</label>
+                  <textarea
+                    id="contact-message"
+                    name="message"
+                    rows="5"
+                    placeholder="Share the project details or the ecosystem you want to support."
+                    value={formData.message}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <button className="button button-primary" type="submit" disabled={isSaving}>
+                  {isSaving ? 'Saving message…' : 'Send message'}
+                </button>
+                <p
+                  className="form-status"
+                  data-status={status.state}
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  {status.message}
+                </p>
+              </fieldset>
+            </form>
           </Layout>
         </section>
 
