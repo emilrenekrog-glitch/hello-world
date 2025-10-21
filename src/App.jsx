@@ -1,7 +1,25 @@
+import { useState } from 'react'
 import './App.css'
 import Layout from './components/Layout'
 
 function App() {
+  const [formData, setFormData] = useState({ name: '', email: '', message: '' })
+  const [status, setStatus] = useState('idle')
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target
+    setFormData((previous) => ({ ...previous, [name]: value }))
+    if (status !== 'idle') {
+      setStatus('idle')
+    }
+  }
+
+  const handleSubmit = (event) => {
+    event.preventDefault()
+    setStatus('success')
+    setFormData({ name: '', email: '', message: '' })
+  }
+
   return (
     <div className="page">
       <header className="site-header">
@@ -13,6 +31,7 @@ function App() {
             <a href="#vision">Vision</a>
             <a href="#initiatives">Initiatives</a>
             <a href="#voices">Voices</a>
+            <a href="#contact">Contact</a>
           </div>
         </Layout>
       </header>
@@ -116,6 +135,86 @@ function App() {
                 </figcaption>
               </figure>
             </div>
+          </Layout>
+        </section>
+
+        <section id="contact" className="section section-alt contact-section">
+          <Layout className="contact-grid">
+            <div className="contact-intro">
+              <p className="section-eyebrow">Contact us</p>
+              <h2>Ready to collaborate?</h2>
+              <p>
+                Share a challenge, an idea, or a location where we can help ecosystems
+                flourish. Our team will reach out within two business days to continue the
+                conversation.
+              </p>
+              <dl className="contact-details">
+                <div>
+                  <dt>Email</dt>
+                  <dd>
+                    <a href="mailto:hello@blueplanet.org">hello@blueplanet.org</a>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Headquarters</dt>
+                  <dd>Seattle, Washington</dd>
+                </div>
+              </dl>
+            </div>
+            <form className="contact-form" onSubmit={handleSubmit} noValidate>
+              <fieldset className="contact-fieldset">
+                <legend className="sr-only">Send us a message</legend>
+                <div className="input-group">
+                  <label htmlFor="contact-name">Full name</label>
+                  <input
+                    id="contact-name"
+                    name="name"
+                    type="text"
+                    autoComplete="name"
+                    placeholder="Ada Lovelace"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="input-group">
+                  <label htmlFor="contact-email">Email</label>
+                  <input
+                    id="contact-email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="input-group">
+                  <label htmlFor="contact-message">How can we help?</label>
+                  <textarea
+                    id="contact-message"
+                    name="message"
+                    rows="5"
+                    placeholder="Share the project details or the ecosystem you want to support."
+                    value={formData.message}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <button className="button button-primary" type="submit">
+                  Send message
+                </button>
+                <p
+                  className="form-status"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  {status === 'success' && 'Thanks! We will be in touch soon.'}
+                </p>
+              </fieldset>
+            </form>
           </Layout>
         </section>
 

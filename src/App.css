@@ -331,6 +331,120 @@ main {
   color: rgba(148, 163, 184, 0.8);
 }
 
+.contact-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.contact-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top right, rgba(34, 211, 238, 0.1), transparent 55%);
+  pointer-events: none;
+}
+
+.contact-grid {
+  position: relative;
+  display: grid;
+  gap: 3rem;
+  align-items: start;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.contact-intro {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.contact-intro h2 {
+  margin: 0;
+  font-size: clamp(2rem, 1.6rem + 1vw, 2.75rem);
+}
+
+.contact-intro p {
+  margin: 0;
+  color: rgba(226, 232, 240, 0.85);
+}
+
+.contact-details {
+  margin: 0;
+  display: grid;
+  gap: 1rem;
+  font-size: 0.95rem;
+}
+
+.contact-details div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.contact-details dt {
+  font-weight: 600;
+  color: rgba(226, 232, 240, 0.92);
+}
+
+.contact-details dd {
+  margin: 0;
+  color: rgba(148, 163, 184, 0.85);
+}
+
+.contact-form {
+  padding: 2.75rem;
+  border-radius: 1.5rem;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.4);
+}
+
+.contact-fieldset {
+  margin: 0;
+  padding: 0;
+  border: none;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.input-group {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.input-group label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(226, 232, 240, 0.92);
+}
+
+.input-group input,
+.input-group textarea {
+  padding: 0.85rem 1rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.95);
+  color: #e2e8f0;
+  box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.5);
+  resize: vertical;
+}
+
+.input-group textarea {
+  min-height: 140px;
+}
+
+.input-group input:focus,
+.input-group textarea:focus {
+  outline: 3px solid rgba(56, 189, 248, 0.45);
+  outline-offset: 2px;
+  border-color: rgba(56, 189, 248, 0.75);
+}
+
+.form-status {
+  min-height: 1.5rem;
+  margin: 0;
+  font-size: 0.95rem;
+  color: rgba(45, 212, 191, 0.95);
+}
+
 .connect-content {
   display: grid;
   gap: 2.5rem;
@@ -471,5 +585,9 @@ main {
   .footer-content {
     justify-content: center;
     text-align: center;
+  }
+
+  .contact-form {
+    padding: 2rem;
   }
 }
