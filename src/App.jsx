@@ -8,31 +8,9 @@ import {
   NEWSLETTER_STORAGE_KEY,
 } from './utils/newsletterStorage'
 
-const STORAGE_KEY = 'newsletterEntries'
-
 function App() {
   const [email, setEmail] = useState('')
   const [entries, setEntries] = useState(() => loadNewsletterEntries())
-  const [entries, setEntries] = useState(() => {
-    if (typeof window === 'undefined') {
-      return []
-    }
-
-    const stored = window.localStorage.getItem(STORAGE_KEY)
-
-    if (!stored) {
-      return []
-    }
-
-    try {
-      const parsed = JSON.parse(stored)
-      return Array.isArray(parsed) ? parsed : []
-    } catch (error) {
-      console.warn('Unable to parse stored newsletter entries', error)
-      return []
-    }
-  })
-
   const [statusMessage, setStatusMessage] = useState('')
 
   const submissionsLabel = useMemo(() => {
@@ -47,11 +25,13 @@ function App() {
   function handleSubmit(event) {
     event.preventDefault()
 
-    if (!email) {
+    const trimmedEmail = email.trim()
+
+    if (!trimmedEmail) {
       return
     }
 
-    const newEntry = { email, submittedAt: new Date().toISOString() }
+    const newEntry = { email: trimmedEmail, submittedAt: new Date().toISOString() }
     const nextEntries = [...entries, newEntry]
     setEntries(nextEntries)
     saveNewsletterEntries(nextEntries)
@@ -61,14 +41,6 @@ function App() {
     setStatusMessage(
       `Thanks for signing up! Saved locally under "${NEWSLETTER_STORAGE_KEY}".`,
     )
-
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextEntries))
-    }
-
-    console.log('Captured newsletter signup:', newEntry)
-    setEmail('')
-    setStatusMessage('Thanks for signing up! Check the console for the stored entry.')
   }
 
   return (
@@ -219,9 +191,6 @@ function App() {
             <p className="newsletter-storage-note">
               Entries stay on this device only and are stored in your browser's local
               storage using the "{NEWSLETTER_STORAGE_KEY}" key.
-            </p>
-            <p className="newsletter-status" aria-live="polite">
-              {statusMessage || submissionsLabel}
             </p>
             {entries.length > 0 && (
               <details className="newsletter-log">
