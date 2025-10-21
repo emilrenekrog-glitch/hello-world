@@ -2,22 +2,111 @@ import { useState } from 'react'
 import './App.css'
 import Layout from './components/Layout'
 
+const CONTACT_STORAGE_KEY = 'blueplanet-contact-submissions'
+
+const readSavedSubmissions = () => {
+  if (typeof window === 'undefined') {
+    return []
+  }
+
+  try {
+    const storedValue = window.localStorage.getItem(CONTACT_STORAGE_KEY)
+
+    if (!storedValue) {
+      return []
+    }
+
+    const parsedValue = JSON.parse(storedValue)
+
+    return Array.isArray(parsedValue) ? parsedValue : []
+  } catch (error) {
+    console.error('Failed to parse saved contact submissions', error)
+    return []
+  }
+}
+
+const persistSubmission = (submission) => {
+  if (typeof window === 'undefined') {
+    return false
+  }
+
+  try {
+    const existingSubmissions = readSavedSubmissions()
+    const updatedSubmissions = [...existingSubmissions, submission]
+    window.localStorage.setItem(CONTACT_STORAGE_KEY, JSON.stringify(updatedSubmissions))
+    return true
+  } catch (error) {
+    console.error('Failed to save contact submission', error)
+    return false
+  }
+}
+
+const createInitialFormState = () => ({ name: '', email: '', message: '' })
+const createInitialStatusState = () => ({ state: 'idle', message: '' })
+
 function App() {
-  const [formData, setFormData] = useState({ name: '', email: '', message: '' })
-  const [status, setStatus] = useState('idle')
+  const [formData, setFormData] = useState(createInitialFormState)
+  const [status, setStatus] = useState(createInitialStatusState)
+  const [isSaving, setIsSaving] = useState(false)
 
   const handleInputChange = (event) => {
     const { name, value } = event.target
     setFormData((previous) => ({ ...previous, [name]: value }))
-    if (status !== 'idle') {
-      setStatus('idle')
+
+    if (status.state !== 'idle') {
+      setStatus(createInitialStatusState())
     }
   }
 
   const handleSubmit = (event) => {
     event.preventDefault()
-    setStatus('success')
-    setFormData({ name: '', email: '', message: '' })
+
+    if (isSaving) {
+      return
+    }
+
+    setStatus(createInitialStatusState())
+
+    const trimmedData = {
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      message: formData.message.trim(),
+    }
+
+    if (!trimmedData.name || !trimmedData.email || !trimmedData.message) {
+      setStatus({
+        state: 'error',
+        message: 'Please fill out every field so we can follow up.',
+      })
+      setFormData(trimmedData)
+      return
+    }
+
+    setIsSaving(true)
+
+    try {
+      const submissionToSave = {
+        ...trimmedData,
+        submittedAt: new Date().toISOString(),
+      }
+
+      const wasSaved = persistSubmission(submissionToSave)
+
+      if (wasSaved) {
+        setStatus({
+          state: 'success',
+          message: 'Thanks! We saved your message and will be in touch soon.',
+        })
+        setFormData(createInitialFormState())
+      } else {
+        setStatus({
+          state: 'error',
+          message: 'We could not save your message. Please try again.',
+        })
+      }
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -149,8 +238,13 @@ function App() {
                 conversation.
               </p>
             </div>
-            <form className="contact-form" onSubmit={handleSubmit} noValidate>
-              <fieldset className="contact-fieldset">
+            <form
+              className="contact-form"
+              onSubmit={handleSubmit}
+              noValidate
+              aria-busy={isSaving}
+            >
+              <fieldset className="contact-fieldset" disabled={isSaving}>
                 <legend className="sr-only">Send us a message</legend>
                 <div className="input-group">
                   <label htmlFor="contact-name">Full name</label>
@@ -190,16 +284,17 @@ function App() {
                     required
                   />
                 </div>
-                <button className="button button-primary" type="submit">
-                  Send message
+                <button className="button button-primary" type="submit" disabled={isSaving}>
+                  {isSaving ? 'Saving message…' : 'Send message'}
                 </button>
                 <p
                   className="form-status"
+                  data-status={status.state}
                   role="status"
                   aria-live="polite"
                   aria-atomic="true"
                 >
-                  {status === 'success' && 'Thanks! We will be in touch soon.'}
+                  {status.message}
                 </p>
               </fieldset>
             </form>

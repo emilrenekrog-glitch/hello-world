@@ -420,7 +420,16 @@ main {
   min-height: 1.5rem;
   margin: 0;
   font-size: 0.95rem;
+  color: rgba(148, 163, 184, 0.9);
+  transition: color 180ms ease;
+}
+
+.form-status[data-status='success'] {
   color: rgba(45, 212, 191, 0.95);
+}
+
+.form-status[data-status='error'] {
+  color: rgba(248, 113, 113, 0.95);
 }
 
 .connect-content {
