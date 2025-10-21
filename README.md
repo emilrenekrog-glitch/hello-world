@@ -39,24 +39,14 @@ Serve the files from `dist/` with your preferred static host.
 ## Contact form submission endpoint
 
 * [`contact-submit.php`](contact-submit.php) accepts `POST` requests from the contact form in the React app.
-* Valid submissions are appended as JSON Lines to `utilities/contact-submissions.jsonl` alongside an ISO-8601 timestamp, and as human-readable lines to `utilities/contact-submissions.txt` (e.g., `Evan for name, example@gmail.com for email and for how can we help : I want to contact`).
+* Valid submissions are appended as JSON Lines to `utilities/contact-submissions.jsonl` alongside an ISO-8601 timestamp.
 * The frontend posts to `/contact-submit.php` by default. Set `VITE_CONTACT_ENDPOINT` before building if you need to target a different URL.
 
 ### Deploying the contact endpoint
 
 1. Copy `contact-submit.php` to the same PHP-enabled host that serves your production build.
 2. Ensure the `utilities/` directory is writable so new `contact-submissions.jsonl` entries can be appended.
-3. Visit the site, submit the contact form, and verify that `utilities/contact-submissions.jsonl` and `utilities/contact-submissions.txt` are created with your test entry.
-
-### Syncing contact submissions to GitHub
-
-If you would like every contact submission to be captured in a GitHub repository (for example, to audit submissions through Git history), configure the following environment variables on your PHP host:
-
-* `CONTACT_GITHUB_REPO` – the `owner/repo` slug that should receive the submissions.
-* `CONTACT_GITHUB_PATH` (optional) – the path within that repository to update. Defaults to `contact-submissions.txt`.
-* `CONTACT_GITHUB_TOKEN` or `GITHUB_TOKEN` – a GitHub token with `repo` scope that can update the chosen repository.
-
-When these variables are present, the endpoint will append each submission as a single line (e.g., `Evan for name, example@gmail.com for email and for how can we help : I want to contact`) to the configured file using the GitHub Contents API.
+3. Visit the site, submit the contact form, and verify that `utilities/contact-submissions.jsonl` is created with your test entry.
 
 ### Saving signups to GitHub instead of a flat file
 
