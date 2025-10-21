@@ -5,6 +5,16 @@ $message = '';
 $emailValue = '';
 $storageDir = __DIR__ . '/utilities';
 $file = $storageDir . '/emails.txt';
+$success = false;
+
+$isJsonRequest = false;
+if (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json')) {
+    $isJsonRequest = true;
+}
+
+if (!$isJsonRequest && isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+    $isJsonRequest = strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $emailValue = trim($_POST['email'] ?? '');
@@ -22,8 +32,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $message = "Thanks! You're signed up.";
                 $emailValue = '';
+                $success = true;
             }
         }
+    }
+
+    if ($isJsonRequest) {
+        if (!$success) {
+            http_response_code(422);
+        }
+
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'success' => $success,
+            'message' => $message,
+        ]);
+        exit;
     }
 }
 
@@ -55,7 +79,7 @@ p.error { color: #b91c1c; }
     <button type="submit">Sign up</button>
   </form>
   <?php if ($message !== ''): ?>
-    <?php $isError = $message !== "Thanks! You're signed up."; ?>
+    <?php $isError = !$success; ?>
     <p class="message<?= $isError ? ' error' : '' ?>"><?= htmlspecialchars($message, ENT_QUOTES) ?></p>
   <?php endif; ?>
 </body>
