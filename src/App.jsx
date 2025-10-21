@@ -1,74 +1,53 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import './App.css'
 import Layout from './components/Layout'
 import {
-  loadNewsletterEntries,
-  saveNewsletterEntries,
-  NEWSLETTER_STORAGE_KEY,
-} from './utils/newsletterStorage'
-
-const STORAGE_KEY = 'newsletterEntries'
+  appendNewsletterLogEntry,
+  downloadNewsletterLog,
+  NEWSLETTER_LOG_STORAGE_KEY,
+} from './utils/newsletterLogger'
 
 function App() {
   const [email, setEmail] = useState('')
-  const [entries, setEntries] = useState(() => loadNewsletterEntries())
-  const [entries, setEntries] = useState(() => {
-    if (typeof window === 'undefined') {
-      return []
-    }
-
-    const stored = window.localStorage.getItem(STORAGE_KEY)
-
-    if (!stored) {
-      return []
-    }
-
-    try {
-      const parsed = JSON.parse(stored)
-      return Array.isArray(parsed) ? parsed : []
-    } catch (error) {
-      console.warn('Unable to parse stored newsletter entries', error)
-      return []
-    }
-  })
-
-  const [statusMessage, setStatusMessage] = useState('')
-
-  const submissionsLabel = useMemo(() => {
-    if (entries.length === 0) {
-      return 'No submissions yet'
-    }
-
-    const { email: lastEmail } = entries[entries.length - 1]
-    return `Most recent signup: ${lastEmail}`
-  }, [entries])
+  const [statusMessage, setStatusMessage] = useState(
+    'No signups captured yet. Entries are logged privately.',
+  )
 
   function handleSubmit(event) {
     event.preventDefault()
 
-    if (!email) {
+    const trimmedEmail = email.trim()
+
+    if (!trimmedEmail) {
       return
     }
 
-    const newEntry = { email, submittedAt: new Date().toISOString() }
-    const nextEntries = [...entries, newEntry]
-    setEntries(nextEntries)
-    saveNewsletterEntries(nextEntries)
+    const newEntry = { email: trimmedEmail, submittedAt: new Date().toISOString() }
+    const { saved, logLine } = appendNewsletterLogEntry(newEntry)
 
-    console.log('Captured newsletter signup:', newEntry)
-    setEmail('')
-    setStatusMessage(
-      `Thanks for signing up! Saved locally under "${NEWSLETTER_STORAGE_KEY}".`,
-    )
-
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextEntries))
+    if (!saved) {
+      setStatusMessage(
+        'We could not record your signup. Please allow browser storage and try again.',
+      )
+      return
     }
 
-    console.log('Captured newsletter signup:', newEntry)
+    console.info('Captured newsletter signup in private log:', logLine)
     setEmail('')
-    setStatusMessage('Thanks for signing up! Check the console for the stored entry.')
+    setStatusMessage(
+      `Thanks for signing up! Your email is stored privately in the "${NEWSLETTER_LOG_STORAGE_KEY}" log.`,
+    )
+  }
+
+  function handleDownloadLog() {
+    const downloaded = downloadNewsletterLog()
+
+    if (downloaded) {
+      setStatusMessage('A private signup log has been downloaded to your device.')
+    } else {
+      setStatusMessage('No log entries available to download just yet.')
+    }
   }
 
   return (
@@ -217,29 +196,17 @@ function App() {
               </button>
             </form>
             <p className="newsletter-storage-note">
-              Entries stay on this device only and are stored in your browser's local
-              storage using the "{NEWSLETTER_STORAGE_KEY}" key.
+              {`Entries stay on this device only and are stored privately using the "${NEWSLETTER_LOG_STORAGE_KEY}" log key.`}
             </p>
+            <button
+              type="button"
+              className="button button-secondary newsletter-download-log"
+              onClick={handleDownloadLog}
+            >
+              Download signup log
+            </button>
             <p className="newsletter-status" aria-live="polite">
-              {statusMessage || submissionsLabel}
-            </p>
-            {entries.length > 0 && (
-              <details className="newsletter-log">
-                <summary>View stored signups ({entries.length})</summary>
-                <ol>
-                  {entries.map((entry) => (
-                    <li key={`${entry.email}-${entry.submittedAt}`}>
-                      <span className="newsletter-log-email">{entry.email}</span>{' '}
-                      <time dateTime={entry.submittedAt}>
-                        {new Date(entry.submittedAt).toLocaleString()}
-                      </time>
-                    </li>
-                  ))}
-                </ol>
-              </details>
-            )}
-            <p className="newsletter-status" aria-live="polite">
-              {statusMessage || submissionsLabel}
+              {statusMessage}
             </p>
           </Layout>
         </section>
