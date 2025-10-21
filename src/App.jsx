@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import './App.css'
 import Layout from './components/Layout'
@@ -13,14 +13,12 @@ function App() {
   const [entries, setEntries] = useState(() => loadNewsletterEntries())
   const [statusMessage, setStatusMessage] = useState('')
 
-  const submissionsLabel = useMemo(() => {
-    if (entries.length === 0) {
-      return 'No submissions yet'
+    if (!trimmedEmail) {
+      return
     }
 
-    const { email: lastEmail } = entries[entries.length - 1]
-    return `Most recent signup: ${lastEmail}`
-  }, [entries])
+    const newEntry = { email: trimmedEmail, submittedAt: new Date().toISOString() }
+    const { saved, logLine } = appendNewsletterLogEntry(newEntry)
 
   function handleSubmit(event) {
     event.preventDefault()
@@ -39,7 +37,7 @@ function App() {
     console.log('Captured newsletter signup:', newEntry)
     setEmail('')
     setStatusMessage(
-      `Thanks for signing up! Saved locally under "${NEWSLETTER_STORAGE_KEY}".`,
+      `Thanks for signing up! Your email is stored privately in the "${NEWSLETTER_LOG_STORAGE_KEY}" log.`,
     )
   }
 
@@ -208,7 +206,7 @@ function App() {
               </details>
             )}
             <p className="newsletter-status" aria-live="polite">
-              {statusMessage || submissionsLabel}
+              {statusMessage}
             </p>
           </Layout>
         </section>
