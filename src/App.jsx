@@ -1,101 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
-
 import './App.css'
 import Layout from './components/Layout'
-import {
-  loadNewsletterEntries,
-  saveNewsletterEntry,
-  NEWSLETTER_FILE_PATH,
-} from './utils/newsletterStorage'
 
 function App() {
-  const [email, setEmail] = useState('')
-  const [entries, setEntries] = useState([])
-  const [statusMessage, setStatusMessage] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  useEffect(() => {
-    let isMounted = true
-
-    async function fetchEntries() {
-      setStatusMessage('Loading stored signups…')
-
-      try {
-        const storedEntries = await loadNewsletterEntries()
-
-        if (!isMounted) {
-          return
-        }
-
-        setEntries(storedEntries)
-
-        if (storedEntries.length > 0) {
-          const pluralized = storedEntries.length === 1 ? 'signup' : 'signups'
-          setStatusMessage(
-            `Loaded ${storedEntries.length} stored ${pluralized} from "${NEWSLETTER_FILE_PATH}".`,
-          )
-        } else {
-          setStatusMessage('')
-        }
-      } catch (error) {
-        console.error('Unable to load stored newsletter signups', error)
-
-        if (isMounted) {
-          setStatusMessage(
-            'Unable to load previous signups from the repository. New submissions will still be attempted.',
-          )
-        }
-      }
-    }
-
-    fetchEntries()
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
-
-  const submissionsLabel = useMemo(() => {
-    if (entries.length === 0) {
-      return 'No submissions yet'
-    }
-
-    const { email: lastEmail } = entries[entries.length - 1]
-    return `Most recent signup: ${lastEmail}`
-  }, [entries])
-
-  async function handleSubmit(event) {
-    event.preventDefault()
-
-    const trimmedEmail = email.trim()
-
-    if (!trimmedEmail) {
-      return
-    }
-
-    setIsSubmitting(true)
-    setStatusMessage('Saving your email…')
-
-    try {
-      const newEntry = await saveNewsletterEntry(trimmedEmail)
-      setEntries((previousEntries) => [...previousEntries, newEntry])
-      console.log('Captured newsletter signup:', newEntry)
-      setEmail('')
-      setStatusMessage(`Thanks for signing up! Saved in "${NEWSLETTER_FILE_PATH}".`)
-    } catch (error) {
-      console.error('Failed to save newsletter signup', error)
-
-      const message =
-        error instanceof Error && error.message
-          ? error.message
-          : 'Unable to save your email right now. Please try again later.'
-
-      setStatusMessage(message)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
   return (
     <div className="page">
       <header className="site-header">
@@ -215,59 +121,27 @@ function App() {
         </section>
 
         <section id="connect" className="section section-alt">
-          <Layout className="newsletter">
+          <Layout className="connect-content">
             <div className="section-header">
               <p className="section-eyebrow">Stay in the loop</p>
-              <h2>Monthly insights for a healthier planet</h2>
+              <h2>Simple email capture for any PHP host</h2>
               <p>
-                Subscribe to receive field notes, research highlights, and opportunities to
-                support the work happening across our global network.
+                Deploy the accompanying <code>index.php</code> file on a PHP-enabled server to
+                collect newsletter signups without any external dependencies or custom APIs.
               </p>
             </div>
-            <form className="newsletter-form" onSubmit={handleSubmit}>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email"
-                type="email"
-                name="email"
-                placeholder="you@example.com"
-                required
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                disabled={isSubmitting}
-              />
-              <button
-                type="submit"
-                className="button button-primary"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Saving…' : 'Sign up'}
-              </button>
-            </form>
-            <p className="newsletter-storage-note">
-              Signups are stored directly in the repository inside the{' '}
-              <code>{NEWSLETTER_FILE_PATH}</code> file.
-            </p>
-            {entries.length > 0 && (
-              <details className="newsletter-log">
-                <summary>View stored signups ({entries.length})</summary>
-                <ol>
-                  {entries.map((entry) => (
-                    <li key={`${entry.email}-${entry.submittedAt}`}>
-                      <span className="newsletter-log-email">{entry.email}</span>{' '}
-                      <time dateTime={entry.submittedAt}>
-                        {new Date(entry.submittedAt).toLocaleString()}
-                      </time>
-                    </li>
-                  ))}
-                </ol>
-              </details>
-            )}
-            <p className="newsletter-status" aria-live="polite">
-              {statusMessage || submissionsLabel}
-            </p>
+            <div className="connect-note">
+              <p>
+                The standalone PHP page validates each submission and appends the email with a
+                timestamp to <code>emails.txt</code>. Review the file later or adapt the storage
+                block to forward signups to your preferred service.
+              </p>
+              <p>
+                Want the addresses in version control instead? Replace the file write with the
+                GitHub API snippet documented inside <code>index.php</code> to push each signup to
+                a repository of your choice.
+              </p>
+            </div>
           </Layout>
         </section>
       </main>
