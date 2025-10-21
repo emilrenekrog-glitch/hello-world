@@ -27,14 +27,17 @@ Serve the files from `dist/` with your preferred static host.
 ## Minimal PHP email sign-up form
 
 * [`index.php`](index.php) is a single-file email capture form that runs on any PHP 8+ host.
-* Submissions are validated server-side and appended to `email.txt` in the same directory with an ISO-8601 timestamp.
-* The generated `email.txt` file is ignored by Git to keep accidental signups out of version control.
+* Submissions are validated server-side and appended to a file in a GitHub repository using the [GitHub Contents API](https://docs.github.com/rest/repos/contents?apiVersion=2022-11-28).
+* Each signup is stored as `email@example.com,2024-01-01T12:00:00+00:00` on its own line so the history doubles as a CSV archive.
 
 ### Deploying the PHP form
 
-1. Copy `index.php` (and an optional empty `email.txt`) to a PHP-enabled web server.
-2. Ensure the directory is writable by the web server user so new signups can be appended.
-3. Visit the page and submit an email address—the form handles everything else.
+1. Copy `index.php` to a PHP-enabled web server.
+2. Provide the following environment variables through your web server's configuration before serving the form:
+   * `GITHUB_TOKEN`: A token with permission to write to the destination repository (`contents:write` on fine-grained tokens or the classic `repo` scope).
+   * `GITHUB_REPO`: The `owner/repository` identifier where signups should be stored.
+   * `GITHUB_PATH` (optional): The path inside the repository for the signup log. Defaults to `email.txt`.
+3. Ensure the server can reach `api.github.com` and submit a test email address to confirm the integration.
 
 ## Contact form submission endpoint
 
@@ -48,44 +51,6 @@ Serve the files from `dist/` with your preferred static host.
 2. Ensure the `utilities/` directory is writable so new `contact-submissions.jsonl` entries can be appended.
 3. Visit the site, submit the contact form, and verify that `utilities/contact-submissions.jsonl` is created with your test entry.
 
-### Saving signups to GitHub instead of a flat file
+### GitHub storage behaviour
 
-If you prefer to store addresses in a GitHub repository, replace the `file_put_contents()` block in `index.php` with the following snippet. Set a `GITHUB_TOKEN` environment variable with permissions to update the target repository before deploying.
-
-```php
-$token = getenv('GITHUB_TOKEN');
-$repo = 'yourusername/newsletter-data';
-$path = 'email.txt';
-$emailLine = $emailValue . ',' . date('c') . "\n";
-
-$apiUrl = "https://api.github.com/repos/$repo/contents/$path";
-$options = [
-    'http' => [
-        'header' => [
-            'Authorization: token ' . $token,
-            'User-Agent: SimpleSignup',
-            'Content-Type: application/json',
-        ],
-        'method' => 'GET',
-    ],
-];
-
-$current = @file_get_contents($apiUrl, false, stream_context_create($options));
-$data = json_decode($current, true);
-$sha = $data['sha'] ?? null;
-$existing = base64_decode($data['content'] ?? '');
-$newContent = base64_encode($existing . $emailLine);
-
-$payload = json_encode([
-    'message' => 'add ' . $emailValue,
-    'content' => $newContent,
-    'sha' => $sha,
-]);
-
-$options['http']['method'] = 'PUT';
-$options['http']['content'] = $payload;
-
-file_get_contents($apiUrl, false, stream_context_create($options));
-```
-
-This mirrors the logic from the README instructions so you can keep using Git history as a simple backing store.
+The signup handler automatically creates the target file if it does not exist and retries once if another process updates the file at the same time. Commit messages follow the format `Add signup for email@example.com` so you can audit additions directly from the repository history.

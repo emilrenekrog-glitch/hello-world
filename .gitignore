@@ -23,6 +23,4 @@ dist-ssr
 *.sln
 *.sw?
 
-# PHP signup storage file
-email.txt
 utilities/contact-submissions.jsonl
